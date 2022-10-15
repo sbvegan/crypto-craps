@@ -15,8 +15,8 @@ pragma solidity 0.8.13;
 contract Craps {
     uint256 private immutable i_ante;
     // just starting simple w/two players
-    address player1; 
-    address player2;
+    address player0; 
+    address player1;
     enum GameState {
         AwaitingPlayers,
         AwaitingPlayer,
@@ -38,8 +38,8 @@ contract Craps {
 
     function joinGame() public payable {
         // check the ante is correct
-        // if player1 empty, initialize player1
-        // if player1 init and player 2 empty, initialize player2
+        // if player0 empty, initialize player0
+        // if player0 init and player1 empty, initialize player1
         // if they're both initilized revert 
     }
 
