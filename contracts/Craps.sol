@@ -14,8 +14,6 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "hardhat/console.sol";
 
-
-
 contract Craps is VRFConsumerBaseV2 {
     /* Type declarations */
     enum GameState {
@@ -48,6 +46,7 @@ contract Craps is VRFConsumerBaseV2 {
 
     /* Events */
     event PlayerJoined(address indexed player);
+    event ShooterRequested(uint256 indexed requestId);
 
     /* Functions */
     constructor(
@@ -129,7 +128,17 @@ contract Craps is VRFConsumerBaseV2 {
         if (s_gameState != GameState.TWO_PLAYERS) {
             revert Craps__IncorrectGameState(s_gameState);
         }
-        s_gameState = GameState.SELECTING_SHOOTER;
         // todo: chainlink vrf logic
+        // todo: test this logic
+        s_gameState = GameState.SELECTING_SHOOTER;
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane, // keyhash 
+            i_subscriptionId, 
+            REQUEST_CONFIRMATIONS, 
+            i_callbackGasLimit, 
+            1
+        );
+        emit ShooterRequested(requestId);
+
     }
 }

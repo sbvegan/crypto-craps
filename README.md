@@ -4,8 +4,8 @@ Street craps powered by the blockchain and chainlink vrfs and keepers?
 
 ## Todo
 
--   write player join tests/logic
 -   write select shooter tests/logic
+    -   write VRF logic for choosing shooter
 -   write 'come out' tests/logic
 -   handle 'come out' win/loss tests/logic
 -   write 'point' tests/logic

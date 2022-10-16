@@ -5,7 +5,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Craps Unit Tests", () => {
-        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2
+        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, subId
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
@@ -133,6 +133,10 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await deployments.fixture(["mocks", "craps"])
                 vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
                 crapsContract = await ethers.getContract("Craps")
+                // setup mock contract
+                subId = await vrfCoordinatorV2Mock.createSubscription()
+                await vrfCoordinatorV2Mock.addConsumer(subId, crapsContract.address)
+                // setup game contract
                 ante = await crapsContract.getAnte()
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
@@ -151,6 +155,11 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await expect(craps.selectShooter()).to.be.revertedWith(
                     "Craps__IncorrectGameState"
                 )
+            })
+
+            it("should emit an event when the shooter has been requested", async () => {
+                await expect(crapsContract.selectShooter())
+                    .to.emit(crapsContract, "ShooterRequested")
             })
         })
     })
