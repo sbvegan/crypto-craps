@@ -36,7 +36,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 assert.equal(player1.address, contractPlayer1)
             })
 
-            it("should update the game state after player 1 joins", async () => {
+            it("should update the game state after player1 joins", async () => {
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
                 const gameState = await craps.getGameState()
@@ -52,7 +52,23 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 assert.equal(player1.address, contractPlayer1)
             })
             
-            // it("allows the second player to join the game", async () => {})
+            it("should allow a second player to join the game", async () => {
+                craps = crapsContract.connect(player1)
+                await craps.joinGame({ value: ante})
+                craps = crapsContract.connect(player2)
+                await craps.joinGame({ value: ante })
+                const contractPlayer2 = await craps.getPlayer2()
+                assert.equal(player2.address, contractPlayer2)
+            })
+
+            it("should update the game state after player2 joins", async () => {
+                craps = crapsContract.connect(player1)
+                await craps.joinGame({ value: ante})
+                craps = crapsContract.connect(player2)
+                await craps.joinGame({ value: ante })
+                const gameState = await craps.getGameState()
+                assert.equal(gameState, 2) // TWO_PLAYERS
+            })
             
         })
     })

@@ -23,7 +23,8 @@ contract Craps is VRFConsumerBaseV2 {
     /* Type declarations */
     enum GameState {
         OPEN,
-        ONE_PLAYER
+        ONE_PLAYER,
+        TWO_PLAYERS
     }
 
     // Chainlink VRF Variables
@@ -98,6 +99,9 @@ contract Craps is VRFConsumerBaseV2 {
         if (s_player1 == address(0)) {
             s_player1 = msg.sender;
             s_gameState = GameState.ONE_PLAYER;
+        } else if (s_player2 == address(0)) {
+            s_player2 = msg.sender;
+            s_gameState = GameState.TWO_PLAYERS;
         }
     }
 }
