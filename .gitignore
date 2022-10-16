@@ -1,2 +1,10 @@
-/node_modules
+# hardhat
+artifacts
+cache
+deployments
+node_modules
+coverage
+coverage.json
+
+# environment variable
 .env
