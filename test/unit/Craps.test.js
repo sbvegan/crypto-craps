@@ -146,11 +146,11 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 assert.equal(gameState, 3) // SELECTING_SHOOTER
             })
 
-            // todo: finish
             it("should revert if shooter has already been called", async () => {
                 await crapsContract.selectShooter()
-                const gameState = await craps.getGameState()
-                assert.equal(gameState, 3) // SELECTING_SHOOTER
+                await expect(craps.selectShooter()).to.be.revertedWith(
+                    "Craps__IncorrectGameState"
+                )
             })
         })
     })

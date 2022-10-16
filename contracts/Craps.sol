@@ -14,10 +14,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "hardhat/console.sol";
 
-/* Errors */
-error Craps__PlayerAlreadyJoined(address existingPlayer);
-error Craps__GameFull();
-error Craps__IncorrectAnte(uint256 correctAnte);
+
 
 contract Craps is VRFConsumerBaseV2 {
     /* Type declarations */
@@ -27,6 +24,12 @@ contract Craps is VRFConsumerBaseV2 {
         TWO_PLAYERS,
         SELECTING_SHOOTER
     }
+
+    /* Errors */
+    error Craps__PlayerAlreadyJoined(address existingPlayer);
+    error Craps__GameFull();
+    error Craps__IncorrectAnte(uint256 correctAnte);
+    error Craps__IncorrectGameState(GameState gameState);
 
     // Chainlink VRF Variables
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
@@ -123,6 +126,10 @@ contract Craps is VRFConsumerBaseV2 {
     }
 
     function selectShooter() public {
+        if (s_gameState != GameState.TWO_PLAYERS) {
+            revert Craps__IncorrectGameState(s_gameState);
+        }
         s_gameState = GameState.SELECTING_SHOOTER;
+        // todo: chainlink vrf logic
     }
 }
