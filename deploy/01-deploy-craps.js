@@ -34,6 +34,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         : VERIFICATION_BLOCK_CONFIRMATIONS
 
     log("----------------------------------------------------")
+    log("Deploying...")
 
     const arguments = [
         vrfCoordinatorV2Address,
@@ -49,6 +50,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log: true,
         waitConfirmations: waitBlockConfirmations,
     })
+
+    // todo: optional, add etherscan verification
 
     log("Deployed.")
     log("----------------------------------------------------")
