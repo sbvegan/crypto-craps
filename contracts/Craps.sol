@@ -41,8 +41,8 @@ contract Craps is VRFConsumerBaseV2 {
     // Craps Variables
     uint256 i_ante;
     // just starting simple w/two players
-    // address player0; 
-    // address player1;
+    // address player1; 
+    // address player2;
     // address shooter;
 
     /* Events */

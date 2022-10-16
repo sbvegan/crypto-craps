@@ -5,12 +5,21 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Craps Unit Tests", () => {
-        let crapsContract, ante, player1, player2
+        let crapsContract, vrfCoordinatorV2Mock, ante, player1, player2
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
-            player0 = accounts[0]
             player1 = accounts[1]
-            // todo: deploy contracts
+            player2 = accounts[2]
+            await deployments.fixture(["mocks", "craps"])
+            vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
+            crapsContract = await ethers.getContract("Craps")
+            ante = await crapsContract.getAnte()
+        })
+
+        describe("constructor", () => {
+            it("initializes the ante correctly", async () => {
+                assert.equal(ante.toString(), networkConfig[network.config.chainId]["ante"])
+            })
         })
     })
