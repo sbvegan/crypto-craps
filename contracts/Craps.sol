@@ -15,19 +15,15 @@ pragma solidity 0.8.13;
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
+import "hardhat/console.sol";
 
 /* Errors */
 
 contract Craps is VRFConsumerBaseV2 {
     /* Type declarations */
     enum GameState {
-        AwaitingPlayers,
-        AwaitingPlayer,
-        AwaitingShooterSelection,
-        AwaitingComeOut,
-        AwaitingPointResult,
-        GameOver,
-        PaidOut
+        OPEN,
+        ONE_PLAYER
     }
 
     // Chainlink VRF Variables
@@ -39,10 +35,10 @@ contract Craps is VRFConsumerBaseV2 {
     uint32 private constant NUM_WORDS = 2; // two dice
 
     // Craps Variables
-    uint256 i_ante;
-    // just starting simple w/two players
-    // address player1; 
-    // address player2;
+    GameState private s_gameState;
+    uint256 private immutable i_ante;
+    address private s_player1; 
+    address private s_player2;
     // address shooter;
 
     /* Events */
@@ -60,6 +56,7 @@ contract Craps is VRFConsumerBaseV2 {
         i_gasLane = gasLane;
         i_callbackGasLimit = callbackGasLimit;
         i_ante = ante;
+        s_gameState = GameState.OPEN;
     }
 
     /**
@@ -75,8 +72,22 @@ contract Craps is VRFConsumerBaseV2 {
         // 2. shooting dice
     }
 
+    /* Getters */
+
+    function getGameState() public view returns (GameState) {
+        return s_gameState;
+    }
+
     function getAnte() public view returns (uint256) {
         return i_ante;
+    }
+
+    function getPlayer1() public view returns (address) {
+        return s_player1;
+    }
+
+    function getPlayer2() public view returns (address) {
+        return s_player2;
     }
 
     function joinGame() public payable {
@@ -84,9 +95,9 @@ contract Craps is VRFConsumerBaseV2 {
         // if player0 empty, initialize player0
         // if player0 init and player1 empty, initialize player1
         // if they're both initilized revert 
-    }
-
-    function chooseShooter() public returns (address) {
-        // must be awaiting shooter selection
+        if (s_player1 == address(0)) {
+            s_player1 = msg.sender;
+            s_gameState = GameState.ONE_PLAYER;
+        }
     }
 }
