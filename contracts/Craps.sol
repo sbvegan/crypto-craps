@@ -18,6 +18,9 @@ import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "hardhat/console.sol";
 
 /* Errors */
+error Craps__PlayerAlreadyJoined(address existingPlayer);
+error Craps__GameFull();
+error Craps__IncorrectAnte(uint256 correctAnte);
 
 contract Craps is VRFConsumerBaseV2 {
     /* Type declarations */
@@ -43,6 +46,7 @@ contract Craps is VRFConsumerBaseV2 {
     // address shooter;
 
     /* Events */
+    event PlayerJoined(address indexed player);
 
     /* Functions */
     constructor(
@@ -75,33 +79,48 @@ contract Craps is VRFConsumerBaseV2 {
 
     /* Getters */
 
+    /// @notice Returns the game's current state
+    /// @dev the state options are defined at the top of the 
+    /// contract under, "Type declarations"
     function getGameState() public view returns (GameState) {
         return s_gameState;
     }
 
+    /// @notice Returns ether ante set on contract deploy
     function getAnte() public view returns (uint256) {
         return i_ante;
     }
 
+    /// @notice Returns s_player1's address
     function getPlayer1() public view returns (address) {
         return s_player1;
     }
 
+    /// @notice Returns s_player2's address
     function getPlayer2() public view returns (address) {
         return s_player2;
     }
 
+    /// @notice Allows up to two unique players (with the correct 
+    /// ante) to join.
+    /// @dev emits PlayerJoined on success and reverts when the
+    /// game is full, the player is trying to join again, or a 
+    /// player provides an incorrect ante
     function joinGame() public payable {
-        // check the ante is correct
-        // if player0 empty, initialize player0
-        // if player0 init and player1 empty, initialize player1
-        // if they're both initilized revert 
-        if (s_player1 == address(0)) {
+        if (msg.sender == s_player1 || msg.sender == s_player2) {
+            revert Craps__PlayerAlreadyJoined(msg.sender);
+        } else if (s_gameState == GameState.TWO_PLAYERS) {
+            revert Craps__GameFull();
+        } else if (msg.value != i_ante) {
+            revert Craps__IncorrectAnte(i_ante);
+        } else if (s_player1 == address(0)) {
             s_player1 = msg.sender;
             s_gameState = GameState.ONE_PLAYER;
+            emit PlayerJoined(msg.sender);
         } else if (s_player2 == address(0)) {
             s_player2 = msg.sender;
             s_gameState = GameState.TWO_PLAYERS;
+            emit PlayerJoined(msg.sender);
         }
     }
 }
