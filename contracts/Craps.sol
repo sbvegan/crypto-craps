@@ -1,6 +1,3 @@
-// starting w/just two players
-// Create a game (set the ante)
-// Second player should be able to join the game (pay the ante)
 // Randomly select the shooter
 // Shooter rolls the 'come out'
 // shooter wins on: 7 || 11
@@ -27,7 +24,8 @@ contract Craps is VRFConsumerBaseV2 {
     enum GameState {
         OPEN,
         ONE_PLAYER,
-        TWO_PLAYERS
+        TWO_PLAYERS,
+        SELECTING_SHOOTER
     }
 
     // Chainlink VRF Variables
@@ -64,10 +62,8 @@ contract Craps is VRFConsumerBaseV2 {
         s_gameState = GameState.OPEN;
     }
 
-    /**
-     * @dev This is the function that Chainlink VRF node
-     * calls to send the money to the random winner.
-     */
+    /// @dev This is the function that Chainlink VRF node
+    /// calls to roll the dice.
     function fulfillRandomWords(
         uint256, /* requestId */
         uint256[] memory randomWords
@@ -101,6 +97,8 @@ contract Craps is VRFConsumerBaseV2 {
         return s_player2;
     }
 
+    /* Game functions */
+
     /// @notice Allows up to two unique players (with the correct 
     /// ante) to join.
     /// @dev emits PlayerJoined on success and reverts when the
@@ -122,5 +120,9 @@ contract Craps is VRFConsumerBaseV2 {
             s_gameState = GameState.TWO_PLAYERS;
             emit PlayerJoined(msg.sender);
         }
+    }
+
+    function selectShooter() public {
+        s_gameState = GameState.SELECTING_SHOOTER;
     }
 }

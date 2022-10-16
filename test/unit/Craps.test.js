@@ -122,6 +122,35 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                     "Craps__IncorrectAnte"
                 )
             })
-            
+        })
+
+        describe("selecting the shooter", () => {
+
+            beforeEach(async () => {
+                accounts = await ethers.getSigners()
+                player1 = accounts[1]
+                player2 = accounts[2]
+                await deployments.fixture(["mocks", "craps"])
+                vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
+                crapsContract = await ethers.getContract("Craps")
+                ante = await crapsContract.getAnte()
+                craps = crapsContract.connect(player1)
+                await craps.joinGame({ value: ante})
+                craps = crapsContract.connect(player2)
+                await craps.joinGame({ value: ante })
+            })
+
+            it("should update the state when the shooter is being selected", async () => {
+                await crapsContract.selectShooter()
+                const gameState = await craps.getGameState()
+                assert.equal(gameState, 3) // SELECTING_SHOOTER
+            })
+
+            // todo: finish
+            it("should revert if shooter has already been called", async () => {
+                await crapsContract.selectShooter()
+                const gameState = await craps.getGameState()
+                assert.equal(gameState, 3) // SELECTING_SHOOTER
+            })
         })
     })
