@@ -5,7 +5,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Craps Unit Tests", () => {
-        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, subId
+        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, subId, fundAmountLink, test
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
@@ -127,21 +127,13 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
         describe("selecting the shooter", () => {
 
             beforeEach(async () => {
-                accounts = await ethers.getSigners()
-                player1 = accounts[1]
-                player2 = accounts[2]
-                await deployments.fixture(["mocks", "craps"])
-                vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
-                crapsContract = await ethers.getContract("Craps")
-                // setup mock contract
-                subId = await vrfCoordinatorV2Mock.createSubscription()
-                await vrfCoordinatorV2Mock.addConsumer(subId, crapsContract.address)
                 // setup game contract
                 ante = await crapsContract.getAnte()
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
                 craps = crapsContract.connect(player2)
                 await craps.joinGame({ value: ante })
+
             })
 
             it("should update the state when the shooter is being selected", async () => {
@@ -160,6 +152,14 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             it("should emit an event when the shooter has been requested", async () => {
                 await expect(crapsContract.selectShooter())
                     .to.emit(crapsContract, "ShooterRequested")
+            })
+
+            it("should update the s_randomWords", async () => {
+                // let test1 = await crapsContract.s_randomWords(0)
+                // await crapsContract.selectShooter()
+                // await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
+                // let test2 = await crapsContract.s_randomWords(0)
+                assert(false)
             })
         })
     })

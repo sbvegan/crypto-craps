@@ -36,6 +36,7 @@ contract Craps is VRFConsumerBaseV2 {
     uint32 private immutable i_callbackGasLimit;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 2; // two dice
+    uint256[] public s_randomWords;
 
     // Craps Variables
     GameState private s_gameState;
@@ -73,6 +74,8 @@ contract Craps is VRFConsumerBaseV2 {
         // there are two cases when the randomness is needed
         // 1. choosing the shooter
         // 2. shooting dice
+        s_randomWords = randomWords;
+        console.log(randomWords[0]);
     }
 
     /* Getters */
