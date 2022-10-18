@@ -187,11 +187,23 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 gameState = await crapsContract.getGameState()
                 craps = crapsContract.connect(player2)
                 await craps.joinGame({ value: ante })
-                await crapsContract.selectShooter();
+                await crapsContract.selectShooter()
+                await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
+                shooter = await crapsContract.getShooter()
             })
 
-            it("", async () => {
+            it("should not let non-shooter roll", async () => {
+                let nonShooter
+                if (player1.address == shooter) {
+                    nonShooter = player2
+                } else {
+                    nonShooter = player1 
+                }
+                craps = crapsContract.connect(nonShooter)
 
+                await expect(craps.rollTheComeOut()).to.be.revertedWith(
+                    "Only shooters."
+                )
             })
         })
     })

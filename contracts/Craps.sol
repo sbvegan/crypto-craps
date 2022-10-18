@@ -50,6 +50,14 @@ contract Craps is VRFConsumerBaseV2 {
     event ShooterRequested(uint256 indexed requestId);
     event ShooterSelected(address indexed shooter);
 
+    modifier onlyShooters {
+        require(
+            msg.sender == s_shooter,
+            "Only shooters."
+        );
+        _;
+    }
+
     /* Functions */
     constructor(
         address vrfCoordinatorV2,
@@ -155,6 +163,9 @@ contract Craps is VRFConsumerBaseV2 {
             1
         );
         emit ShooterRequested(requestId);
+    }
+
+    function rollTheComeOut() public onlyShooters {
 
     }
 }
