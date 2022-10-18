@@ -139,12 +139,13 @@ contract Craps is VRFConsumerBaseV2 {
         }
     }
 
+    /// @notice Allows anyone to randomly select the shooter
+    /// @dev Makes a request to the ChainLink VRF Coordinator.
+    /// When that request is filled, the shooter will be selected.
     function selectShooter() public {
         if (s_gameState != GameState.TWO_PLAYERS) {
             revert Craps__IncorrectGameState(s_gameState);
         }
-        // todo: chainlink vrf logic
-        // todo: test this logic
         s_gameState = GameState.SELECTING_SHOOTER;
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane, // keyhash 

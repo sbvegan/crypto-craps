@@ -131,10 +131,8 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 ante = await crapsContract.getAnte()
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
-                gameState = await crapsContract.getGameState()
                 craps = crapsContract.connect(player2)
                 await craps.joinGame({ value: ante })
-                gameState = await crapsContract.getGameState()
             })
 
             it("should update the state when the shooter is being selected", async () => {
@@ -176,6 +174,24 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
                 gameState = await crapsContract.getGameState()
                 assert.equal(gameState, 4) // AWAITING_COME_OUT
+            })
+        })
+
+        describe("handling the come out", () => {
+
+            beforeEach(async () => {
+                // setup game contract
+                ante = await crapsContract.getAnte()
+                craps = crapsContract.connect(player1)
+                await craps.joinGame({ value: ante})
+                gameState = await crapsContract.getGameState()
+                craps = crapsContract.connect(player2)
+                await craps.joinGame({ value: ante })
+                await crapsContract.selectShooter();
+            })
+
+            it("", async () => {
+
             })
         })
     })
