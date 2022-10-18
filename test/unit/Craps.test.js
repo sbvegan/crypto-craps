@@ -5,7 +5,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Craps Unit Tests", () => {
-        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, subId, fundAmountLink, test
+        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, shooter, gameState, value
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
@@ -23,7 +23,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
 
             it("should start in the open state", async () => {
-                const gameState = await crapsContract.getGameState()
+                gameState = await crapsContract.getGameState()
                 assert.equal(gameState, 0) // OPEN
             })
         })
@@ -39,7 +39,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             it("should update the game state after player1 joins", async () => {
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
-                const gameState = await craps.getGameState()
+                gameState = await craps.getGameState()
                 assert.equal(gameState, 1) // ONE_PLAYER
             })
 
@@ -74,7 +74,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await craps.joinGame({ value: ante})
                 craps = crapsContract.connect(player2)
                 await craps.joinGame({ value: ante })
-                const gameState = await craps.getGameState()
+                gameState = await craps.getGameState()
                 assert.equal(gameState, 2) // TWO_PLAYERS
             })
 
@@ -131,14 +131,15 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 ante = await crapsContract.getAnte()
                 craps = crapsContract.connect(player1)
                 await craps.joinGame({ value: ante})
+                gameState = await crapsContract.getGameState()
                 craps = crapsContract.connect(player2)
                 await craps.joinGame({ value: ante })
-
+                gameState = await crapsContract.getGameState()
             })
 
             it("should update the state when the shooter is being selected", async () => {
                 await crapsContract.selectShooter()
-                const gameState = await craps.getGameState()
+                gameState = await craps.getGameState()
                 assert.equal(gameState, 3) // SELECTING_SHOOTER
             })
 
@@ -154,12 +155,27 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                     .to.emit(crapsContract, "ShooterRequested")
             })
 
-            it("should update the s_randomWords", async () => {
-                // let test1 = await crapsContract.s_randomWords(0)
-                // await crapsContract.selectShooter()
-                // await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
-                // let test2 = await crapsContract.s_randomWords(0)
-                assert(false)
+            it("should select a shooter", async () => {
+                // initially should be zero
+                shooter = await crapsContract.getShooter()
+                assert.equal(shooter, ethers.constants.AddressZero) 
+                await crapsContract.selectShooter();
+                await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
+                shooter = await crapsContract.getShooter()
+                assert.equal(shooter, player2.address)
+            })
+
+            it("should emit the shooter's address after they're is selected", async () => {
+                await crapsContract.selectShooter();
+                await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address))
+                    .to.emit(crapsContract, "ShooterSelected")
+            })
+
+            it("should update the state after a shooter is selected", async () => {
+                await crapsContract.selectShooter();
+                await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
+                gameState = await crapsContract.getGameState()
+                assert.equal(gameState, 4) // AWAITING_COME_OUT
             })
         })
     })

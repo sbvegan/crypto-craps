@@ -1,4 +1,3 @@
-// Randomly select the shooter
 // Shooter rolls the 'come out'
 // shooter wins on: 7 || 11
 // shooter loses on: 2 || 3 || 12
@@ -20,7 +19,8 @@ contract Craps is VRFConsumerBaseV2 {
         OPEN,
         ONE_PLAYER,
         TWO_PLAYERS,
-        SELECTING_SHOOTER
+        SELECTING_SHOOTER,
+        AWAITING_COME_OUT
     }
 
     /* Errors */
@@ -43,11 +43,12 @@ contract Craps is VRFConsumerBaseV2 {
     uint256 private immutable i_ante;
     address private s_player1; 
     address private s_player2;
-    // address shooter;
+    address private s_shooter;
 
     /* Events */
     event PlayerJoined(address indexed player);
     event ShooterRequested(uint256 indexed requestId);
+    event ShooterSelected(address indexed shooter);
 
     /* Functions */
     constructor(
@@ -71,11 +72,17 @@ contract Craps is VRFConsumerBaseV2 {
         uint256, /* requestId */
         uint256[] memory randomWords
     ) internal override {
-        // there are two cases when the randomness is needed
-        // 1. choosing the shooter
+        if (s_gameState == GameState.SELECTING_SHOOTER) {
+            uint256 selection = randomWords[0] % 2;
+            if (selection == 0) {
+                s_shooter = s_player1;
+            } else {
+                s_shooter = s_player2;
+            }
+            s_gameState = GameState.AWAITING_COME_OUT;
+            emit ShooterSelected(s_shooter);
+        }
         // 2. shooting dice
-        s_randomWords = randomWords;
-        console.log(randomWords[0]);
     }
 
     /* Getters */
@@ -100,6 +107,11 @@ contract Craps is VRFConsumerBaseV2 {
     /// @notice Returns s_player2's address
     function getPlayer2() public view returns (address) {
         return s_player2;
+    }
+
+    /// @notice Returns s_shooter's address
+    function getShooter() public view returns (address) {
+        return s_shooter;
     }
 
     /* Game functions */
