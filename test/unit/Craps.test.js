@@ -5,7 +5,17 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("Craps Unit Tests", () => {
-        let craps, crapsContract, vrfCoordinatorV2Mock, ante, player1, player2, shooter, gameState, value
+        let craps, 
+            crapsContract, 
+            vrfCoordinatorV2Mock, 
+            ante, 
+            player1, 
+            player2, 
+            shooter,
+            nonShooter,
+            shooterAddress, 
+            gameState, 
+            value
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
@@ -155,12 +165,12 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 
             it("should select a shooter", async () => {
                 // initially should be zero
-                shooter = await crapsContract.getShooter()
-                assert.equal(shooter, ethers.constants.AddressZero) 
+                shooterAddress = await crapsContract.getShooter()
+                assert.equal(shooterAddress, ethers.constants.AddressZero) 
                 await crapsContract.selectShooter();
                 await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
-                shooter = await crapsContract.getShooter()
-                assert.equal(shooter, player2.address)
+                shooterAddress = await crapsContract.getShooter()
+                assert.equal(shooterAddress, player2.address)
             })
 
             it("should emit the shooter's address after they're is selected", async () => {
@@ -189,21 +199,25 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await craps.joinGame({ value: ante })
                 await crapsContract.selectShooter()
                 await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
-                shooter = await crapsContract.getShooter()
+                shooterAddress = await crapsContract.getShooter()
+                if (player1.address == shooterAddress) {
+                    shooter = player1
+                    nonShooter = player2
+                } else {
+                    shooter = player2 
+                    nonShooter = player1
+                }
             })
 
             it("should not let non-shooter roll", async () => {
-                let nonShooter
-                if (player1.address == shooter) {
-                    nonShooter = player2
-                } else {
-                    nonShooter = player1 
-                }
                 craps = crapsContract.connect(nonShooter)
-
                 await expect(craps.rollTheComeOut()).to.be.revertedWith(
                     "Only shooters."
                 )
+            })
+
+            it("should roll the dice", async () => {
+                
             })
         })
     })
