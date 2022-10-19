@@ -44,11 +44,14 @@ contract Craps is VRFConsumerBaseV2 {
     address private s_player1; 
     address private s_player2;
     address private s_shooter;
+    uint8 private s_die1;
+    uint8 private s_die2;
 
     /* Events */
     event PlayerJoined(address indexed player);
     event ShooterRequested(uint256 indexed requestId);
     event ShooterSelected(address indexed shooter);
+    event ComeOutRequested(uint256 indexed requestId);
 
     modifier onlyShooters {
         require(
@@ -74,6 +77,11 @@ contract Craps is VRFConsumerBaseV2 {
         s_gameState = GameState.OPEN;
     }
 
+    function calculateDieValue(uint256 randomWord) internal pure returns (uint8) {
+        uint256 value = randomWord % 6 + 1;
+        return uint8(value);
+    }
+
     /// @dev This is the function that Chainlink VRF node
     /// calls to roll the dice.
     function fulfillRandomWords(
@@ -89,8 +97,12 @@ contract Craps is VRFConsumerBaseV2 {
             }
             s_gameState = GameState.AWAITING_COME_OUT;
             emit ShooterSelected(s_shooter);
+            return;
         }
-        // 2. shooting dice
+        if (s_gameState == GameState.AWAITING_COME_OUT) {
+            s_die1 = calculateDieValue(randomWords[0]);
+            s_die2 = calculateDieValue(randomWords[1]);
+        }
     }
 
     /* Getters */
@@ -120,6 +132,22 @@ contract Craps is VRFConsumerBaseV2 {
     /// @notice Returns s_shooter's address
     function getShooter() public view returns (address) {
         return s_shooter;
+    }
+
+    /// @notice Returns die1
+    function getDie1() public view returns (uint8) {
+        return s_die1;
+    }
+
+    /// @notice Returns die2
+    function getDie2() public view returns (uint8) {
+        return s_die2;
+    }
+
+    /// @notice Returns die2
+    function getDiceSum() public view returns (uint8) {
+        uint8 sum = s_die1 + s_die2;
+        return sum;
     }
 
     /* Game functions */
@@ -166,6 +194,16 @@ contract Craps is VRFConsumerBaseV2 {
     }
 
     function rollTheComeOut() public onlyShooters {
-
+        if (s_gameState != GameState.AWAITING_COME_OUT) {
+            revert Craps__IncorrectGameState(s_gameState);
+        }
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane, // keyhash 
+            i_subscriptionId, 
+            REQUEST_CONFIRMATIONS, 
+            i_callbackGasLimit, 
+            2
+        );
+        emit ComeOutRequested(requestId);
     }
 }
