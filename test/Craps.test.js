@@ -12,7 +12,8 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
             player1, 
             player2, 
             shooterAddress, 
-            gameState
+            gameState, 
+            value
 
         beforeEach(async () => {
             accounts = await ethers.getSigners()
@@ -184,4 +185,37 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
             })
         })
 
+        describe("handling the come out", () => {
+
+            beforeEach(async () => {
+                // setup game contract
+                ante = await crapsContract.getAnte()
+                craps = crapsContract.connect(player1)
+                await craps.joinGame({ value: ante})
+                gameState = await crapsContract.getGameState()
+                craps = crapsContract.connect(player2)
+                await craps.joinGame({ value: ante })
+                await crapsContract.selectShooter()
+                await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
+                shooterAddress = await crapsContract.getShooter()
+                if (player1.address == shooterAddress) {
+                    shooter = player1
+                    nonShooter = player2
+                } else {
+                    shooter = player2 
+                    nonShooter = player1
+                }
+            })
+
+            it("should not let non-shooter roll", async () => {
+                craps = crapsContract.connect(nonShooter)
+                await expect(craps.rollTheComeOut()).to.be.revertedWith(
+                    "Only shooters."
+                )
+            })
+
+            it("should roll the dice", async () => {
+                
+            })
+        })
     })
