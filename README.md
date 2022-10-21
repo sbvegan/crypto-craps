@@ -1,5 +1,9 @@
 # Crypto Craps
 
+TODO: withdraw functionality
+TODO: testing roll functionality on a local testnet and then live testnet
+TODO: write scripts for the tests above
+
 ## The Rules
 
 _These are a slightly simplified version of the street craps rules. The main difference is there is only two players, so no pot matching and side bets from additional players._

@@ -1,10 +1,3 @@
-// Shooter rolls the 'come out'
-// shooter wins on: 7 || 11
-// shooter loses on: 2 || 3 || 12
-// other? point is defined and the shooter continues to roll until point || 7
-// shooter wins on point
-// shooter loses on 7 out
-
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
@@ -20,7 +13,9 @@ contract Craps is VRFConsumerBaseV2 {
         ONE_PLAYER,
         TWO_PLAYERS,
         SELECTING_SHOOTER,
-        AWAITING_COME_OUT
+        AWAITING_COME_OUT,
+        AWAITING_POINT_RESULT,
+        GAME_OVER
     }
 
     /* Errors */
@@ -44,14 +39,20 @@ contract Craps is VRFConsumerBaseV2 {
     address private s_player1; 
     address private s_player2;
     address private s_shooter;
+    address private s_non_shooter;
+    address private s_winner;
     uint8 private s_die1;
     uint8 private s_die2;
+    uint8 private s_dice_sum;
+    uint8 private s_point;
 
     /* Events */
     event PlayerJoined(address indexed player);
     event ShooterRequested(uint256 indexed requestId);
     event ShooterSelected(address indexed shooter);
+    event NonShooterSelected(address indexed non_shooter);
     event ComeOutRequested(uint256 indexed requestId);
+    event WinnerSelected(address indexed winner);
 
     modifier onlyShooters {
         require(
@@ -92,16 +93,46 @@ contract Craps is VRFConsumerBaseV2 {
             uint256 selection = randomWords[0] % 2;
             if (selection == 0) {
                 s_shooter = s_player1;
+                s_non_shooter = s_player2;
             } else {
                 s_shooter = s_player2;
+                s_non_shooter = s_player1;
             }
             s_gameState = GameState.AWAITING_COME_OUT;
             emit ShooterSelected(s_shooter);
+            emit NonShooterSelected(s_non_shooter);
             return;
         }
         if (s_gameState == GameState.AWAITING_COME_OUT) {
             s_die1 = calculateDieValue(randomWords[0]);
             s_die2 = calculateDieValue(randomWords[1]);
+            s_dice_sum = getDiceSum();
+            if (s_dice_sum == 7 || s_dice_sum == 11) {
+                // shooter wins
+                // todo: refactor these, code reused 3 times
+                s_winner = s_shooter;
+                s_gameState = GameState.GAME_OVER;
+                emit WinnerSelected(s_winner);
+            } else if (s_dice_sum == 2 || s_dice_sum == 3 || s_dice_sum == 12) {
+                // shooter loses
+                s_winner = s_non_shooter;
+                s_gameState = GameState.GAME_OVER;
+                emit WinnerSelected(s_winner);
+            } else {
+                // point defined, roll again
+                s_point = s_dice_sum;
+                s_gameState = GameState.AWAITING_POINT_RESULT;
+            }
+        }
+        if (s_gameState == GameState.AWAITING_POINT_RESULT) {
+            s_die1 = calculateDieValue(randomWords[0]);
+            s_die2 = calculateDieValue(randomWords[1]);
+            s_dice_sum = getDiceSum();
+            if (s_dice_sum == s_point) {
+                s_winner = s_shooter;
+                s_gameState = GameState.GAME_OVER;
+                emit WinnerSelected(s_winner);
+            }
         }
     }
 
@@ -132,6 +163,11 @@ contract Craps is VRFConsumerBaseV2 {
     /// @notice Returns s_shooter's address
     function getShooter() public view returns (address) {
         return s_shooter;
+    }
+
+    /// @notice Returns s_non_shooter's address
+    function getNonShooter() public view returns (address) {
+        return s_non_shooter;
     }
 
     /// @notice Returns die1

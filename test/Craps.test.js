@@ -168,13 +168,21 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
                 await crapsContract.selectShooter();
                 await vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address)
                 shooterAddress = await crapsContract.getShooter()
+                nonShooterAddress = await crapsContract.getNonShooter()
                 assert.equal(shooterAddress, player2.address)
+                assert.equal(nonShooterAddress, player1.address)
             })
 
             it("should emit the shooter's address after they're is selected", async () => {
                 await crapsContract.selectShooter();
                 await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address))
                     .to.emit(crapsContract, "ShooterSelected")
+            })
+
+            it("should emit the non-shooter's address after they're is selected", async () => {
+                await crapsContract.selectShooter();
+                await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, crapsContract.address))
+                    .to.emit(crapsContract, "NonShooterSelected")
             })
 
             it("should update the state after a shooter is selected", async () => {
