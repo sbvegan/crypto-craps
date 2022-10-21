@@ -214,8 +214,32 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
                 )
             })
 
-            it("should roll the dice", async () => {
-                
+            it("should initially have invalid dice [0,0]", async () => {
+                craps = crapsContract.connect(shooter)
+                die1 = await craps.getDie1()
+                die2 = await craps.getDie2()
+                sum = await craps.getDiceSum()
+                assert.equal(die1, 0)
+                assert.equal(die2, 0)
+                assert.equal(sum, 0)
+            })
+
+            it("should update emit a ComeOutRequested event", async () => {
+                craps = crapsContract.connect(shooter)
+                await expect(craps.rollTheComeOut())
+                    .to.emit(crapsContract, "ComeOutRequested")
+            })
+
+            it("should update the dice to valid values after randomness is fulfilled", async () => {
+                craps = crapsContract.connect(shooter)
+                craps.rollTheComeOut()
+                await vrfCoordinatorV2Mock.fulfillRandomWords(2, crapsContract.address)
+                die1 = await craps.getDie1()
+                die2 = await craps.getDie2()
+                assert.isAbove(die1, 0)
+                assert.isAbove(die2, 0)
+                assert.isBelow(die1, 7)
+                assert.isBelow(die2, 7)
             })
         })
     })
