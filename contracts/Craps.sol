@@ -40,7 +40,7 @@ contract Craps is VRFConsumerBaseV2 {
     address private s_player2;
     address private s_shooter;
     address private s_non_shooter;
-    address private s_winner;
+    address payable private s_winner;
     uint8 private s_die1;
     uint8 private s_die2;
     uint8 private s_dice_sum;
@@ -58,6 +58,14 @@ contract Craps is VRFConsumerBaseV2 {
         require(
             msg.sender == s_shooter,
             "Only shooters."
+        );
+        _;
+    }
+
+    modifier onlyWinner {
+        require(
+            msg.sender == s_winner,
+            "Only winner."
         );
         _;
     }
@@ -110,12 +118,12 @@ contract Craps is VRFConsumerBaseV2 {
             if (s_dice_sum == 7 || s_dice_sum == 11) {
                 // shooter wins
                 // todo: refactor these, code reused 3 times
-                s_winner = s_shooter;
+                s_winner = payable(s_shooter);
                 s_gameState = GameState.GAME_OVER;
                 emit WinnerSelected(s_winner);
             } else if (s_dice_sum == 2 || s_dice_sum == 3 || s_dice_sum == 12) {
                 // shooter loses
-                s_winner = s_non_shooter;
+                s_winner = payable(s_non_shooter);
                 s_gameState = GameState.GAME_OVER;
                 emit WinnerSelected(s_winner);
             } else {
@@ -129,7 +137,7 @@ contract Craps is VRFConsumerBaseV2 {
             s_die2 = calculateDieValue(randomWords[1]);
             s_dice_sum = getDiceSum();
             if (s_dice_sum == s_point) {
-                s_winner = s_shooter;
+                s_winner = payable(s_shooter);
                 s_gameState = GameState.GAME_OVER;
                 emit WinnerSelected(s_winner);
             }
@@ -229,7 +237,11 @@ contract Craps is VRFConsumerBaseV2 {
         emit ShooterRequested(requestId);
     }
 
-
+    // TODO: refactor into a single roll function
+    
+    /// @notice Allows the shooter to roll the comeout
+    /// @dev Makes a request to the ChainLink VRF Coordinator.
+    /// When that request is filled, the roll will be made.
     function rollTheComeOut() public onlyShooters {
         if (s_gameState != GameState.AWAITING_COME_OUT) {
             revert Craps__IncorrectGameState(s_gameState);
@@ -242,5 +254,29 @@ contract Craps is VRFConsumerBaseV2 {
             2
         );
         emit ComeOutRequested(requestId);
+    }
+
+    /// @notice Allows the shooter to roll after the comeout
+    /// @dev Makes a request to the ChainLink VRF Coordinator.
+    /// When that request is filled, the roll will be made.
+    function roll() public onlyShooters {
+        if (s_gameState != GameState.AWAITING_POINT_RESULT) {
+            revert Craps__IncorrectGameState(s_gameState);
+        }
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane, // keyhash 
+            i_subscriptionId, 
+            REQUEST_CONFIRMATIONS, 
+            i_callbackGasLimit, 
+            2
+        );
+        emit ComeOutRequested(requestId);
+    }
+
+    /// @notice Allows the winner to withdraw the money.
+    function withdraw() public onlyWinner {
+        uint amount = address(this).balance;
+        (bool success, ) = s_winner.call{value: amount}("");
+        require(success, "Failed to send Ether");
     }
 }
